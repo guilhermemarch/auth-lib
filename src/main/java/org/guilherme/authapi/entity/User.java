@@ -1,8 +1,12 @@
 package org.guilherme.authapi.entity;
 
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Table(name = "users")
 public class User {
@@ -10,11 +14,24 @@ public class User {
     @Id
     private Long id;
 
+
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Column(unique = true)
     private String username;
 
+
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, message = "Password must be at least 6 characters")
+    @Column(unique = true)
     private String password;
 
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
+    @Column(unique = true)
     private String email;
+
 
 
     public Long getId() {
