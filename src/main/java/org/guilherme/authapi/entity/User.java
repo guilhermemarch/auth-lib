@@ -1,18 +1,28 @@
-package org.guilherme.authapi.dto;
+package org.guilherme.authapi.entity;
 
-public class RegisterRequest {
+
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Table(name = "users")
+public class User {
+
+    @Id
+    private Long id;
 
     private String username;
+
     private String password;
+
     private String email;
 
-    public RegisterRequest() {
+
+    public Long getId() {
+        return id;
     }
 
-    public RegisterRequest(String username, String password, String email) {
-        this.username = username;
-        this.password = password;
-        this.email = email;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getUsername() {
@@ -39,4 +49,13 @@ public class RegisterRequest {
         this.email = email;
     }
 
+    public User() {
+    }
+
+    public User(Long id, String username, String password, String email) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.email = email;
+    }
 }

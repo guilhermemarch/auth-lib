@@ -1,4 +1,4 @@
 package org.guilherme.authapi.service;
 
-public class UsersService {
+public class UserService {
 }

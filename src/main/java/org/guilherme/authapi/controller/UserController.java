@@ -1,4 +1,4 @@
 package org.guilherme.authapi.controller;
 
-public class UsersController {
+public class UserController {
 }
