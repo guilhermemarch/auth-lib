@@ -6,6 +6,9 @@ import org.guilherme.authapi.dto.RegisterRequest;
 import org.guilherme.authapi.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.guilherme.authapi.repository.UserRepository;
 import org.guilherme.authapi.dto.RegisterRequest;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -52,6 +56,26 @@ public class UserController {
 
         return ResponseEntity.ok().body(new RegisterRequest(savedUser.getUsername(), null, savedUser.getEmail()));
     }
+
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody AuthenticationRequest authRequest) {
+
+        String username = authRequest.getUsername();
+        String password = authRequest.getPassword();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new BadCredentialsException("Invalid username or password");
+        }
+
+        String token = jwtUtil.generateToken(user);
+
+        return ResponseEntity.ok(new AuthenticationResponse(token));
+    }
+
 
 
 }
