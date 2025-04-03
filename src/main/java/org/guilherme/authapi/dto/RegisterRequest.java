@@ -15,6 +15,8 @@ public class RegisterRequest {
         this.email = email;
     }
 
+
+
     public String getUsername() {
         return username;
     }
@@ -38,5 +40,4 @@ public class RegisterRequest {
     public void setEmail(String email) {
         this.email = email;
     }
-
 }
