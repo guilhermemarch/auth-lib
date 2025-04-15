@@ -1,6 +1,8 @@
 package org.guilherme.authapi.util;
 
+import org.guilherme.authapi.config.AppConfig;
 import org.passay.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -10,13 +12,15 @@ import java.util.List;
 public class PasswordValidator {
     private final org.passay.PasswordValidator validator;
 
-    public PasswordValidator() {
+    @Autowired
+    public PasswordValidator(AppConfig appConfig) {
+        AppConfig.Security security = appConfig.getSecurity();
         validator = new org.passay.PasswordValidator(Arrays.asList(
-                new LengthRule(8, 30),
-                new CharacterRule(EnglishCharacterData.UpperCase, 1),
-                new CharacterRule(EnglishCharacterData.LowerCase, 1),
-                new CharacterRule(EnglishCharacterData.Digit, 1),
-                new CharacterRule(EnglishCharacterData.Special, 1),
+                new LengthRule(security.getPasswordMinLength(), security.getPasswordMaxLength()),
+                new CharacterRule(EnglishCharacterData.UpperCase, security.getPasswordMinUppercase()),
+                new CharacterRule(EnglishCharacterData.LowerCase, security.getPasswordMinLowercase()),
+                new CharacterRule(EnglishCharacterData.Digit, security.getPasswordMinDigit()),
+                new CharacterRule(EnglishCharacterData.Special, security.getPasswordMinSpecial()),
                 new WhitespaceRule(),
                 new IllegalSequenceRule(EnglishSequenceData.Alphabetical, 5, false),
                 new IllegalSequenceRule(EnglishSequenceData.Numerical, 5, false)

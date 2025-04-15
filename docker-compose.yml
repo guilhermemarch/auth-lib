@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: auth-postgres
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /data/postgres
+    volumes:
+      - postgres-data:/data/postgres
+    networks:
+      - auth-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin (optional - for database management)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: auth-pgadmin
+    ports:
+      - "${PGADMIN_PORT}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - auth-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  # Spring Boot Application
+  # auth-api:
+  #   build: .
+  #   container_name: auth-api
+  #   ports:
+  #     - "${SERVER_PORT}:8080"
+  #   environment:
+  #     SPRING_DATASOURCE_URL: jdbc:postgresql://${POSTGRES_HOST}:5432/${POSTGRES_DB}
+  #     SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+  #     SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+  #     APP_JWT_SECRET: ${JWT_SECRET}
+  #     APP_JWT_EXPIRATION: ${JWT_EXPIRATION}
+  #     APP_JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
+  #     APP_MAIL_HOST: ${MAIL_HOST}
+  #     APP_MAIL_PORT: ${MAIL_PORT}
+  #     APP_MAIL_USERNAME: ${MAIL_USERNAME}
+  #     APP_MAIL_PASSWORD: ${MAIL_PASSWORD}
+  #     APP_MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH}
+  #     APP_MAIL_STARTTLS_ENABLE: ${MAIL_STARTTLS_ENABLE}
+  #     APP_MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+  #     APP_MAIL_FROM_NAME: ${MAIL_FROM_NAME}
+  #     APP_VERIFICATION_BASE_URL: ${APP_BASE_URL}
+  #   networks:
+  #     - auth-network
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  # Mail server for local development (if needed)
+  # mailhog:
+  #   image: mailhog/mailhog
+  #   container_name: auth-mailhog
+  #   ports:
+  #     - "1025:1025"  # SMTP server
+  #     - "8025:8025"  # Web UI
+  #   networks:
+  #     - auth-network
+
+volumes:
+  postgres-data:
+  pgadmin-data:
+
+networks:
+  auth-network:
+    driver: bridge 
