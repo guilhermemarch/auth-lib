@@ -38,50 +38,64 @@ public class EmailService {
         String verificationUrl = appConfig.getVerification().getVerificationUrl(token);
 
         String content = """
-    <html>
-        <head>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    background-color: #f9f9f9;
-                    padding: 20px;
-                    color: #333333;
-                }
-                .container {
-                    background-color: #ffffff;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    max-width: 600px;
-                    margin: auto;
-                }
-                .button {
-                    display: inline-block;
-                    margin-top: 20px;
-                    padding: 10px 20px;
-                    font-size: 16px;
-                    color: #ffffff;
-                    background-color: #007BFF;
-                    text-decoration: none;
-                    border-radius: 5px;
-                }
-                p {
-                    line-height: 1.6;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h2>Verify Your Email Address</h2>
-                <p>Thank you for registering! Please verify your email address by clicking the button below:</p>
-                <a href="%s" class="button">Verify Email</a>
-                <p>If the button above doesn't work, you can also copy and paste the following link into your browser:</p>
-                <p><a href="%s">%s</a></p>
-                <p>This link will expire in %d hours.</p>
-            </div>
-        </body>
-    </html>
-""".formatted(verificationUrl, verificationUrl, verificationUrl, appConfig.getVerification().getTokenExpirationHours());
+<html>
+  <body style="margin: 0; padding: 0; background-color: #f2f4f6; font-family: Arial, sans-serif;">
+    <table width="100%%" cellpadding="0" cellspacing="0" style="background-color: #f2f4f6; padding: 40px 0;">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; padding: 30px; border-radius: 6px;">
+            <tr>
+              <td align="center" style="font-size: 24px; font-weight: bold; color: #2f2f2f; padding-bottom: 16px;">
+                Verify Your Email Address
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="font-size: 16px; color: #4a4a4a; padding-bottom: 12px;">
+                Thanks for signing up!
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="font-size: 16px; color: #4a4a4a; padding-bottom: 24px;">
+                Click the button below to verify your email and activate your account:
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-bottom: 24px;">
+                <a href="%s" style="background-color: #007bff; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; display: inline-block; font-weight: bold;">
+                  Verify Email
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="font-size: 14px; color: #4a4a4a; padding-bottom: 12px;">
+                If the button doesn’t work, copy and paste this link into your browser:
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="font-size: 14px; word-break: break-all; color: #007bff;">
+                <a href="%s" style="color: #007bff; text-decoration: none;">%s</a>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="font-size: 12px; color: #999999; padding-top: 30px;">
+                This link will expire in %d hour%s.<br />
+                If you didn’t request this, you can ignore this email.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+""".formatted(
+                verificationUrl,
+                verificationUrl,
+                verificationUrl,
+                appConfig.getVerification().getTokenExpirationHours(),
+                appConfig.getVerification().getTokenExpirationHours() == 1 ? "" : "s"
+        );
+
 
 
         EmailMessage emailMessage = new EmailMessage(to, subject, content, token, "VERIFICATION");
