@@ -177,7 +177,7 @@ public class AppConfig {
     public static class Verification {
         private int tokenExpirationHours = 24;
         private String baseUrl = "http://localhost:8080";
-        private String verificationEndpoint = "/api/auth/verify";
+        private String verificationEndpoint = "/auth/verify";
         
         public int getTokenExpirationHours() {
             return tokenExpirationHours;
@@ -222,5 +222,9 @@ public class AppConfig {
     
     public Verification getVerification() {
         return verification;
+    }
+
+    public void sendVerificationEmail(String to, String token) {
+        // existing code...
     }
 } 
