@@ -1,33 +1,81 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:14-alpine
-    container_name: auth-postgres
-    ports:
-      - "${POSTGRES_PORT}:5432"
+    image: postgres:15.5-bookworm
+    platform: linux/amd64
+    container_name: auth-db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      PGDATA: /data/postgres
+      - POSTGRES_DB=auth_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+    ports:
+      - "5432:5432"
     volumes:
-      - postgres-data:/data/postgres
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
     networks:
       - auth-network
-    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    platform: linux/amd64
+    container_name: auth-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${RABBITMQ_PORT}:5672"   # AMQP protocol port
+      - "15672:15672" # Management interface port
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: always
+    networks:
+      - auth-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # pgAdmin (optional - for database management)
+  auth-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+    container_name: auth-api
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: ${SERVER_PORT}
+    ports:
+      - "8080:8080"
+    networks:
+      - auth-network
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
   pgadmin:
     image: dpage/pgadmin4
+    platform: linux/amd64
     container_name: auth-pgadmin
     ports:
-      - "${PGADMIN_PORT}:80"
+      - "5050:80"
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
@@ -35,53 +83,15 @@ services:
       - pgadmin-data:/var/lib/pgadmin
     networks:
       - auth-network
-    restart: unless-stopped
+    restart: always
     depends_on:
       - postgres
 
-  # Spring Boot Application
-  # auth-api:
-  #   build: .
-  #   container_name: auth-api
-  #   ports:
-  #     - "${SERVER_PORT}:8080"
-  #   environment:
-  #     SPRING_DATASOURCE_URL: jdbc:postgresql://${POSTGRES_HOST}:5432/${POSTGRES_DB}
-  #     SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-  #     SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-  #     APP_JWT_SECRET: ${JWT_SECRET}
-  #     APP_JWT_EXPIRATION: ${JWT_EXPIRATION}
-  #     APP_JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
-  #     APP_MAIL_HOST: ${MAIL_HOST}
-  #     APP_MAIL_PORT: ${MAIL_PORT}
-  #     APP_MAIL_USERNAME: ${MAIL_USERNAME}
-  #     APP_MAIL_PASSWORD: ${MAIL_PASSWORD}
-  #     APP_MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH}
-  #     APP_MAIL_STARTTLS_ENABLE: ${MAIL_STARTTLS_ENABLE}
-  #     APP_MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
-  #     APP_MAIL_FROM_NAME: ${MAIL_FROM_NAME}
-  #     APP_VERIFICATION_BASE_URL: ${APP_BASE_URL}
-  #   networks:
-  #     - auth-network
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   restart: unless-stopped
-
-  # Mail server for local development (if needed)
-  # mailhog:
-  #   image: mailhog/mailhog
-  #   container_name: auth-mailhog
-  #   ports:
-  #     - "1025:1025"  # SMTP server
-  #     - "8025:8025"  # Web UI
-  #   networks:
-  #     - auth-network
-
 volumes:
-  postgres-data:
+  postgres_data:
+  rabbitmq_data:
   pgadmin-data:
 
 networks:
   auth-network:
-    driver: bridge 
+    driver: bridge
