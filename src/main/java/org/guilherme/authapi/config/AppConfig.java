@@ -11,7 +11,7 @@ public class AppConfig {
     private final Mail mail = new Mail();
     private final Security security = new Security();
     private final Verification verification = new Verification();
-    
+
     public static class Jwt {
         private String secret;
         private long expiration;
@@ -178,6 +178,8 @@ public class AppConfig {
         private int tokenExpirationHours = 24;
         private String baseUrl = "http://localhost:8080";
         private String verificationEndpoint = "/auth/verify";
+
+        private String resetEndpoint = "/auth/reset-password";
         
         public int getTokenExpirationHours() {
             return tokenExpirationHours;
@@ -202,9 +204,17 @@ public class AppConfig {
         public void setVerificationEndpoint(String verificationEndpoint) {
             this.verificationEndpoint = verificationEndpoint;
         }
+
+        public void setResetEndpoint(String resetEndpoint) {
+            this.resetEndpoint = resetEndpoint;
+        }
         
         public String getVerificationUrl(String token) {
             return baseUrl + verificationEndpoint + "?token=" + token;
+        }
+
+        public String getResetUrl(String token) {
+            return baseUrl + resetEndpoint + "?token=" + token;
         }
     }
     
@@ -224,7 +234,5 @@ public class AppConfig {
         return verification;
     }
 
-    public void sendVerificationEmail(String to, String token) {
-        // existing code...
-    }
+
 } 
