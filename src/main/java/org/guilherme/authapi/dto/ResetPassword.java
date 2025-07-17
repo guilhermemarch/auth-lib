@@ -1,15 +1,17 @@
 package org.guilherme.authapi.dto;
 
-public class ForgotPassword {
+public class ResetPassword {
 
     private String email;
     private String newPassword;
+    private String token;
 
-    public ForgotPassword() {
+    public ResetPassword() {
     }
-    public ForgotPassword(String email, String newPassword) {
+    public ResetPassword(String email, String newPassword, String token) {
         this.email = email;
         this.newPassword = newPassword;
+        this.token = token;
     }
     public String getEmail() {
         return email;
@@ -22,6 +24,12 @@ public class ForgotPassword {
     }
     public void setNewPassword(String newPassword) {
         this.newPassword = newPassword;
+    }
+    public String getToken() {
+        return token;
+    }
+    public void setToken(String token) {
+        this.token = token;
     }
 
 
