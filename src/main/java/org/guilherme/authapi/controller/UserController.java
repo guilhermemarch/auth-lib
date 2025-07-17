@@ -2,9 +2,11 @@ package org.guilherme.authapi.controller;
 
 import jakarta.validation.Valid;
 import org.guilherme.authapi.dto.AuthenticationResponse;
+import org.guilherme.authapi.dto.ResetPassword;
 import org.guilherme.authapi.dto.LoginRequest;
 import org.guilherme.authapi.dto.RegisterRequest;
 import org.guilherme.authapi.entity.User;
+import org.guilherme.authapi.entity.VerificationToken;
 import org.guilherme.authapi.exception.TokenExpiredException;
 import org.guilherme.authapi.exception.TokenNotFoundException;
 import org.guilherme.authapi.exception.UserAlreadyExistException;
@@ -21,6 +23,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -28,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class UserController {
 
     @Autowired
@@ -60,8 +63,11 @@ public class UserController {
 
 
     @PostMapping("/register")
+    @Transactional
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
+
         List<String> passwordErrors = passwordValidator.validate(registerRequest.getPassword());
+
         if (!passwordErrors.isEmpty()) {
             return ResponseEntity.badRequest().body(passwordErrors);
         }
@@ -94,27 +100,32 @@ public class UserController {
     }
 
     @PostMapping("/login")
+    @Transactional
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest authRequest) {
-        String username = authRequest.getUsername();
+        String email = authRequest.getEmail();
         String password = authRequest.getPassword();
 
         try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new BadCredentialsException("Email ou senha inválidos"));
+
             authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
+                    new UsernamePasswordAuthenticationToken(user.getUsername(), password)
             );
+
+            final UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+            final String token = jwtUtil.generateToken(userDetails);
+
+            return ResponseEntity.ok(new AuthenticationResponse(token));
         } catch (DisabledException e) {
             return ResponseEntity.badRequest().body(Map.of("message", "Account is not verified. Please verify your email"));
         } catch (BadCredentialsException e) {
-            throw new BadCredentialsException("Invalid username or password");
+            return ResponseEntity.status(401).body(Map.of("message", "Email ou senha inválidos"));
         }
-
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        final String token = jwtUtil.generateToken(userDetails);
-
-        return ResponseEntity.ok(new AuthenticationResponse(token));
     }
     
     @GetMapping("/verify")
+    @Transactional
     public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
         try {
             User verifiedUser = verificationService.verifyEmail(token);
@@ -131,6 +142,7 @@ public class UserController {
     }
     
     @PostMapping("/resend-verification")
+    @Transactional
     public ResponseEntity<?> resendVerification(@RequestParam("email") String email) {
         User user = userRepository.findByEmail(email)
                 .orElse(null);
@@ -146,5 +158,44 @@ public class UserController {
         verificationService.resendVerificationToken(user);
         
         return ResponseEntity.ok(Map.of("message", "A new verification link has been sent to your email"));
+    }
+
+
+    @PostMapping("/forgot-password")
+    @Transactional
+    public ResponseEntity<?> forgotPassword(@RequestParam("email") String email) {
+        User user = userRepository.findByEmail(email)
+                .orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.ok(Map.of("message", "If your email exists in our system, a password reset link has been sent"));
+        }
+
+        verificationService.createPasswordResetToken(user);
+
+        return ResponseEntity.ok(Map.of("message", "A password reset link has been sent to your email"));
+    }
+
+    @PostMapping("/reset-password")
+    @Transactional
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPassword ResetPassword) {
+
+        String token = ResetPassword.getToken();
+        String newPassword = ResetPassword.getNewPassword();
+
+        List<String> passwordErrors = passwordValidator.validate(newPassword);
+
+        if (!passwordErrors.isEmpty()) {
+            return ResponseEntity.badRequest().body(passwordErrors);
+        }
+
+        User user = verificationService.resetPassword(token, newPassword);
+
+
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired password reset token"));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Password reset successful. You can now log in with your new password"));
     }
 }
