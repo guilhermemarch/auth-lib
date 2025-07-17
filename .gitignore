@@ -1,4 +1,8 @@
 HELP.md
+
+.env
+
+
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -18,6 +22,7 @@ target/
 *.iws
 *.iml
 *.ipr
+.env
 
 ### NetBeans ###
 /nbproject/private/
@@ -31,3 +36,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+src/main/java/org/guilherme/authapi/util/Teste.java
+.env
