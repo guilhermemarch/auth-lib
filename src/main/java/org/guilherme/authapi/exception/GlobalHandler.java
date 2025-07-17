@@ -23,4 +23,10 @@ public class GlobalHandler {
     public ResponseEntity<?> handleTokenExpiredException(TokenExpiredException ex) {
         return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
     }
+
+    @ExceptionHandler(BadCredencialException.class)
+    public ResponseEntity<?> handleTokenExpiredException(BadCredencialException ex) {
+        return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+    }
+
 }
