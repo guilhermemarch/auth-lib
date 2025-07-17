@@ -4,6 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -17,6 +19,8 @@ import java.util.function.Function;
 @Component
 public class JwtTokenUtil {
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtTokenUtil.class);
+
     @Value("${app.jwt.secret}")
     private String secret;
 
@@ -24,8 +28,16 @@ public class JwtTokenUtil {
     private Long expiration;
 
     private Key getSigningKey() {
-        byte[] keyBytes = secret.getBytes();
-        return Keys.hmacShaKeyFor(keyBytes);
+        try {
+            byte[] keyBytes = secret.getBytes();
+            if (keyBytes.length < 64) {
+                throw new IllegalArgumentException("a chave JWT precisa ter ao menos 64 caracteres.");
+            }
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (Exception e) {
+            logger.error("erro ao assinar a chave: " + e.getMessage());
+            throw new RuntimeException("erro ao criar a chave", e);
+        }
     }
 
     public String getUsernameFromToken(String token) {
