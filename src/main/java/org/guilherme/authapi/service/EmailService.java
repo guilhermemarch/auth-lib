@@ -34,52 +34,52 @@ public class EmailService {
     }
 
     public void sendVerificationEmail(String to, String token) throws MessagingException, UnsupportedEncodingException {
-        String subject = "Email Verification";
+        String subject = "Verificação de Email";
         String verificationUrl = appConfig.getVerification().getVerificationUrl(token);
 
         String content = """
 <html>
-  <body style="margin: 0; padding: 0; background-color: #f2f4f6; font-family: Arial, sans-serif;">
-    <table width="100%%" cellpadding="0" cellspacing="0" style="background-color: #f2f4f6; padding: 40px 0;">
+  <body style=\"margin: 0; padding: 0; background-color: #f2f4f6; font-family: Arial, sans-serif;\">
+    <table width=\"100%%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #f2f4f6; padding: 40px 0;\">
       <tr>
-        <td align="center">
-          <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; padding: 30px; border-radius: 6px;">
+        <td align=\"center\">
+          <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #ffffff; padding: 30px; border-radius: 6px;\">
             <tr>
-              <td align="center" style="font-size: 24px; font-weight: bold; color: #2f2f2f; padding-bottom: 16px;">
-                Verify Your Email Address
+              <td align=\"center\" style=\"font-size: 24px; font-weight: bold; color: #2f2f2f; padding-bottom: 16px;\">
+                Verifique seu endereço de email
               </td>
             </tr>
             <tr>
-              <td align="center" style="font-size: 16px; color: #4a4a4a; padding-bottom: 12px;">
-                Thanks for signing up!
+              <td align=\"center\" style=\"font-size: 16px; color: #4a4a4a; padding-bottom: 12px;\">
+                Obrigado por se cadastrar!
               </td>
             </tr>
             <tr>
-              <td align="center" style="font-size: 16px; color: #4a4a4a; padding-bottom: 24px;">
-                Click the button below to verify your email and activate your account:
+              <td align=\"center\" style=\"font-size: 16px; color: #4a4a4a; padding-bottom: 24px;\">
+                Clique no botão abaixo para verificar seu email e ativar sua conta:
               </td>
             </tr>
             <tr>
-              <td align="center" style="padding-bottom: 24px;">
-                <a href="%s" style="background-color: #007bff; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; display: inline-block; font-weight: bold;">
-                  Verify Email
+              <td align=\"center\" style=\"padding-bottom: 24px;\">
+                <a href=\"%s\" style=\"background-color: #007bff; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; display: inline-block; font-weight: bold;\">
+                  Verificar Email
                 </a>
               </td>
             </tr>
             <tr>
-              <td align="center" style="font-size: 14px; color: #4a4a4a; padding-bottom: 12px;">
-                If the button doesn't work, copy and paste this link into your browser:
+              <td align=\"center\" style=\"font-size: 14px; color: #4a4a4a; padding-bottom: 12px;\">
+                Se o botão não funcionar, copie e cole este link no seu navegador:
               </td>
             </tr>
             <tr>
-              <td align="center" style="font-size: 14px; word-break: break-all; color: #007bff;">
-                <a href="%s" style="color: #007bff; text-decoration: none;">%s</a>
+              <td align=\"center\">
+                <a href=\"%s\" style=\"color: #007bff; text-decoration: none;\">%s</a>
               </td>
             </tr>
             <tr>
-              <td align="center" style="font-size: 12px; color: #999999; padding-top: 30px;">
-                This link will expire in %d hour%s.<br />
-                If you didn't request this, you can ignore this email.
+              <td align=\"center\" style=\"font-size: 12px; color: #999999; padding-top: 30px;\">
+                Este link irá expirar em %d hora%s.<br />
+                Se você não solicitou isso, pode ignorar este email.
               </td>
             </tr>
           </table>
@@ -102,52 +102,52 @@ public class EmailService {
     }
 
     public void sendChangePasswordEmail(String to, String token) throws MessagingException, UnsupportedEncodingException {
-        String subject = "Password Reset Request";
+        String subject = "Solicitação de Redefinição de Senha";
         String resetUrl = appConfig.getVerification().getResetUrl(token);
 
         String content = """
 <html>
-  <body style="margin: 0; padding: 0; background-color: #f2f4f6; font-family: Arial, sans-serif;">
-    <table width="100%%" cellpadding="0" cellspacing="0" style="background-color: #f2f4f6; padding: 40px 0;">
+  <body style=\"margin: 0; padding: 0; background-color: #f2f4f6; font-family: Arial, sans-serif;\">
+    <table width=\"100%%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #f2f4f6; padding: 40px 0;\">
       <tr>
-        <td align="center">
-          <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; padding: 30px; border-radius: 6px;">
+        <td align=\"center\">
+          <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #ffffff; padding: 30px; border-radius: 6px;\">
             <tr>
-              <td align="center" style="font-size: 24px; font-weight: bold; color: #2f2f2f; padding-bottom: 16px;">
-                Reset Your Password
+              <td align=\"center\" style=\"font-size: 24px; font-weight: bold; color: #2f2f2f; padding-bottom: 16px;\">
+                Redefina sua senha
               </td>
             </tr>
             <tr>
-              <td align="center" style="font-size: 16px; color: #4a4a4a; padding-bottom: 12px;">
-                We received a request to reset your password.
+              <td align=\"center\" style=\"font-size: 16px; color: #4a4a4a; padding-bottom: 12px;\">
+                Recebemos uma solicitação para redefinir sua senha.
               </td>
             </tr>
             <tr>
-              <td align="center" style="font-size: 16px; color: #4a4a4a; padding-bottom: 24px;">
-                Click the button below to set a new password:
+              <td align=\"center\" style=\"font-size: 16px; color: #4a4a4a; padding-bottom: 24px;\">
+                Clique no botão abaixo para criar uma nova senha:
               </td>
             </tr>
             <tr>
-              <td align="center" style="padding-bottom: 24px;">
-                <a href="%s" style="background-color: #007bff; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; display: inline-block; font-weight: bold;">
-                  Reset Password
+              <td align=\"center\" style=\"padding-bottom: 24px;\">
+                <a href=\"%s\" style=\"background-color: #007bff; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 4px; display: inline-block; font-weight: bold;\">
+                  Redefinir Senha
                 </a>
               </td>
             </tr>
             <tr>
-              <td align="center" style="font-size: 14px; color: #4a4a4a; padding-bottom: 12px;">
-                If the button doesn't work, copy and paste this link into your browser:
+              <td align=\"center\" style=\"font-size: 14px; color: #4a4a4a; padding-bottom: 12px;\">
+                Se o botão não funcionar, copie e cole este link no seu navegador:
               </td>
             </tr>
             <tr>
-              <td align="center" style="font-size: 14px; word-break: break-all; color: #007bff;">
-                <a href="%s" style="color: #007bff; text-decoration: none;">%s</a>
+              <td align=\"center\">
+                <a href=\"%s\" style=\"color: #007bff; text-decoration: none;\">%s</a>
               </td>
             </tr>
             <tr>
-              <td align="center" style="font-size: 12px; color: #999999; padding-top: 30px;">
-                This link will expire in %d hour%s.<br />
-                If you did not request a password reset, you can safely ignore this email.
+              <td align=\"center\" style=\"font-size: 12px; color: #999999; padding-top: 30px;\">
+                Este link irá expirar em %d hora%s.<br />
+                Se você não solicitou a redefinição de senha, pode ignorar este email.
               </td>
             </tr>
           </table>

@@ -1,128 +1,227 @@
-# Authentication API
+# API de Autenticação
 
-A Spring Boot application that provides JWT-based authentication, including user registration, login, and password recovery with email notifications.
+Uma aplicação Spring Boot que fornece autenticação baseada em JWT, incluindo registro de usuário, login, verificação de e-mail e recuperação de senha com notificações por e-mail.
+
+## Funcionalidades
+
+- Registro de Usuário com Verificação de E-mail
+- Autenticação baseada em JWT
+- Fluxo de Recuperação de Senha
+- Notificações por E-mail
+- Integração com Banco de Dados PostgreSQL
+- Suporte a Docker
+- Documentação da API
+
+## Arquitetura do Sistema
+
+![Relações do Banco de Dados](exemplos/sql-relations.png)
 
 ---
 
-## Prerequisites
+## Pré-requisitos
 
 - Java 17
 - Docker & Docker Compose
+- PostgreSQL (se executando localmente)
 
 ---
 
-## Running with Docker Compose
+## Executando com Docker Compose
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/guilhermemarch/auth-lib
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd auth-api
-   ```
-3. Start the containers:
-   ```bash
-   docker-compose up -d
-   ```
+1.  Clone o repositório:
+    ```bash
+    git clone https://github.com/your-username/auth-api.git
+    ```
+2.  Navegue até o diretório do projeto:
+    ```bash
+    cd auth-api
+    ```
+3.  Inicie os contêineres:
+    ```bash
+    docker-compose up -d
+    ```
 
-This will start the following services:
+Isto iniciará os seguintes serviços:
 
-- PostgreSQL – accessible on port 5432
-- pgAdmin – accessible on http://localhost:5050
-- AuthAPI – available on port 8080
-
----
-
-## Database Access (pgAdmin)
-
-Login Credentials:
-- Email: admin@admin.com
-- Password: admin
-
-To connect to PostgreSQL:
-- Host: postgres
-- Port: 5432
-- Database: auth_db
-- Username: postgres
-- Password: admin
+-   **PostgreSQL** – acessível na porta `5432`
+-   **pgAdmin** – acessível em `http://localhost:5050`
+-   **AuthAPI** – disponível na porta `8080`
 
 ---
 
-## API Endpoints
+## Acesso ao Banco de Dados (pgAdmin)
 
-### Registration
-```
+**Credenciais de Login:**
+
+-   **Email:** `admin@admin.com`
+-   **Senha:** `admin`
+
+**Para conectar ao PostgreSQL:**
+
+-   **Host:** `postgres`
+-   **Porta:** `5432`
+-   **Banco de Dados:** `auth_db`
+-   **Usuário:** `postgres`
+-   **Senha:** `admin`
+
+---
+
+## Endpoints da API
+
+### 1. Registro de Usuário
+
+```http
 POST /api/auth/register
 ```
 
-Request Body:
+Registra um novo usuário e envia um e-mail de verificação.
+
+**Corpo da Requisição:**
+
 ```json
 {
-  "username": "testuser",
-  "password": "Password123!",
-  "email": "test@example.com"
+    "username": "guilherme",
+    "password": "Guilherme@123!",
+    "email": "guilherme@gmail.com"
 }
 ```
 
-### Login
-```
+### 2. Login de Usuário
+
+```http
 POST /api/auth/login
 ```
 
-Request Body:
+Autentica um usuário e retorna um token JWT.
+
+**Corpo da Requisição:**
+
 ```json
 {
-  "username": "testuser",
-  "password": "Password123!"
+    "email": "guilherme@gmail.com",
+    "password": "Guilherme@123!"
 }
 ```
 
+### 3. Esqueceu a Senha
+
+```http
+POST /api/auth/forgot-password?email=guilherme@gmail.com
+```
+
+Solicita um link de redefinição de senha por e-mail.
+
+### 4. Redefinir Senha
+
+```http
+POST /api/auth/reset-password
+```
+
+Redefine a senha usando o token recebido por e-mail.
+
+**Corpo da Requisição:**
+
+```json
+{
+    "email": "guilherme@gmail.com",
+    "token": "seu-token-de-reset",
+    "newPassword": "NovaSenha@2024!"
+}
+```
+
+### 5. Verificação de E-mail
+
+```http
+GET /api/auth/verify-email?token=seu-token-de-verificacao
+```
+
+Verifica o endereço de e-mail do usuário usando o token recebido.
+
+### 6. Reenviar E-mail de Verificação
+
+```http
+POST /api/auth/resend-verification?email=guilherme@gmail.com
+```
+
+Solicita um novo e-mail de verificação.
+
+### 7. Verificação de Saúde (Health Check)
+
+```http
+GET /api/auth/health
+```
+
+Verifica o status da API.
+
 ---
 
-## Environment Configuration
+## Exemplos de Notificação por E-mail
 
-Environment variables are defined in the `.env` file, including:
+### E-mail de Confirmação de Registro
 
-- PostgreSQL database configuration
-- JWT secret and expiration
-- Server port
+![E-mail de Registro](exemplos/img_1.png)
+
+### Verificação de E-mail
+
+![Verificação de E-mail](exemplos/img_2.png)
+
+### Solicitação de Redefinição de Senha
+
+![Redefinição de Senha](exemplos/img_3.png)
+
+### Confirmação de Redefinição de Senha
+
+![Confirmação de Redefinição](exemplos/img_4.png)
 
 ---
 
-## Running Locally (without Docker)
+## Configuração de Ambiente
 
-1. Ensure PostgreSQL is running locally.
-2. Update the `src/main/resources/application.properties` file with your local DB credentials.
-3. Run the application:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
+As variáveis de ambiente são definidas no arquivo `.env`, incluindo:
+
+-   Configuração do banco de dados PostgreSQL
+-   Segredo e tempo de expiração do JWT
+-   Porta do servidor
+-   Configuração do serviço de e-mail
+-   Configurações do RabbitMQ
 
 ---
 
-## Building the Application
+## Executando Localmente (sem Docker)
+
+1.  Certifique-se de que o PostgreSQL está rodando localmente.
+2.  Atualize o arquivo `src/main/resources/application.properties` com as credenciais do seu banco de dados local.
+3.  Execute a aplicação:
+    ```bash
+    ./mvnw spring-boot:run
+    ```
+
+---
+
+## Construindo a Aplicação
 
 ```bash
 ./mvnw clean package
 ```
 
-This will generate a JAR file in the `target/` directory.
+Isso irá gerar um arquivo JAR no diretório `target/`.
 
 ---
 
-## Security Configuration
+## Funcionalidades de Segurança
 
-Located in `WebSecurityConfig.java`, this class:
-
-- Secures all API endpoints using JWT
-- Configures CORS and CSRF settings
-- Sets up custom authentication and authorization providers
+-   Autenticação baseada em JWT
+-   Criptografia de senha usando BCrypt
+-   Verificação de e-mail
+-   Redefinição de senha baseada em token
+-   Proteção contra CORS e CSRF
+-   Limitação de taxa de requisições (Rate Limiting)
+-   Validação de senha segura
 
 ---
 
-## Email Notifications
+## Json das Requisições
 
-After successful registration, a confirmation email is automatically sent to the user's email address.
+Uma coleção completa do Postman está disponível no arquivo `exemplos/auth-collection.json`. Importe esta coleção no Postman para testar todos os endpoints disponíveis.
 
-![Email Example](img.png)
+---

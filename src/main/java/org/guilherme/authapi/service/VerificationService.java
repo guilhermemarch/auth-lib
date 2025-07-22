@@ -68,10 +68,10 @@ public class VerificationService {
     @Transactional
     public User verifyEmail(String token) {
         VerificationToken verificationToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new TokenNotFoundException("Verification token not found"));
+                .orElseThrow(() -> new TokenNotFoundException("Token de verificação não encontrado"));
         
         if (verificationToken.isExpired()) {
-            throw new TokenExpiredException("Verification token has expired");
+            throw new TokenExpiredException("O token de verificação expirou");
         }
         
         User user = verificationToken.getUser();
@@ -98,14 +98,14 @@ public class VerificationService {
     public User resetPassword(String token, String newPassword) {
 
         if (newPassword == null || newPassword.isEmpty()) {
-            throw new IllegalArgumentException("New password must not be empty");
+            throw new IllegalArgumentException("A nova senha não pode ser vazia");
         }
 
         VerificationToken verificationToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new TokenNotFoundException("Password reset token not found"));
+                .orElseThrow(() -> new TokenNotFoundException("Token de redefinição de senha não encontrado"));
 
         if (verificationToken.isExpired()) {
-            throw new TokenExpiredException("Password reset token has expired");
+            throw new TokenExpiredException("O token de redefinição de senha expirou");
         }
 
 

@@ -73,11 +73,11 @@ public class UserController {
         }
 
         if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
-            throw new UserAlreadyExistException("Username already exists");
+            throw new UserAlreadyExistException("Nome de usuário já existe");
         }
 
         if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
-            throw new UserAlreadyExistException("Email already exists");
+            throw new UserAlreadyExistException("Email já cadastrado");
         }
 
         User user = new User();
@@ -92,7 +92,7 @@ public class UserController {
         verificationService.createVerificationToken(savedUser);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "Registration successful, please check your email to verify your account");
+        response.put("message", "Cadastro realizado com sucesso! Verifique seu email para ativar sua conta.");
         response.put("username", savedUser.getUsername());
         response.put("email", savedUser.getEmail());
         
@@ -118,7 +118,7 @@ public class UserController {
 
             return ResponseEntity.ok(new AuthenticationResponse(token));
         } catch (DisabledException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Account is not verified. Please verify your email"));
+            return ResponseEntity.badRequest().body(Map.of("message", "Conta não verificada. Por favor, verifique seu email."));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(401).body(Map.of("message", "Email ou senha inválidos"));
         }
@@ -130,14 +130,14 @@ public class UserController {
         try {
             User verifiedUser = verificationService.verifyEmail(token);
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Email verification successful. You can now log in");
+            response.put("message", "Email verificado com sucesso! Agora você pode fazer login.");
             response.put("username", verifiedUser.getUsername());
             
             return ResponseEntity.ok(response);
         } catch (TokenNotFoundException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Invalid verification link"));
+            return ResponseEntity.badRequest().body(Map.of("message", "Link de verificação inválido."));
         } catch (TokenExpiredException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Verification link has expired. Please request a new one"));
+            return ResponseEntity.badRequest().body(Map.of("message", "O link de verificação expirou. Solicite um novo."));
         }
     }
     
@@ -148,16 +148,16 @@ public class UserController {
                 .orElse(null);
         
         if (user == null) {
-            return ResponseEntity.ok(Map.of("message", "If your email exists in our system, a verification link has been sent"));
+            return ResponseEntity.ok(Map.of("message", "Se o email existir no nosso sistema, um link de verificação foi enviado."));
         }
         
         if (user.isEmailVerified()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Email is already verified"));
+            return ResponseEntity.badRequest().body(Map.of("message", "Email já verificado."));
         }
         
         verificationService.resendVerificationToken(user);
         
-        return ResponseEntity.ok(Map.of("message", "A new verification link has been sent to your email"));
+        return ResponseEntity.ok(Map.of("message", "Um novo link de verificação foi enviado para seu email."));
     }
 
 
@@ -168,12 +168,12 @@ public class UserController {
                 .orElse(null);
 
         if (user == null) {
-            return ResponseEntity.ok(Map.of("message", "If your email exists in our system, a password reset link has been sent"));
+            return ResponseEntity.ok(Map.of("message", "Se o email existir no nosso sistema, um link para redefinir a senha foi enviado."));
         }
 
         verificationService.createPasswordResetToken(user);
 
-        return ResponseEntity.ok(Map.of("message", "A password reset link has been sent to your email"));
+        return ResponseEntity.ok(Map.of("message", "Um link para redefinir a senha foi enviado para seu email."));
     }
 
     @PostMapping("/reset-password")
@@ -196,6 +196,6 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired password reset token"));
         }
 
-        return ResponseEntity.ok(Map.of("message", "Password reset successful. You can now log in with your new password"));
+        return ResponseEntity.ok(Map.of("message", "Senha redefinida com sucesso! Agora você pode fazer login com a nova senha."));
     }
 }
