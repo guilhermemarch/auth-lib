@@ -1,5 +1,15 @@
 # API de Autenticação
 
+[![Java](https://img.shields.io/badge/Java-17-red?logo=java&logoColor=white)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.4-brightgreen?logo=springboot)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15.x-blue?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.x-ff6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://www.docker.com/)
+[![Maven](https://img.shields.io/badge/Maven-3.9.x-orange?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
+[![JWT](https://img.shields.io/badge/JWT-io.jsonwebtoken-9900cc)](https://github.com/jwtk/jjwt)
+[![Passay](https://img.shields.io/badge/Passay-password--validation-yellow)](https://www.passay.org/)
+[![Bucket4j](https://img.shields.io/badge/Bucket4j-rate--limiting-blueviolet)](https://bucket4j.com/)
+
 Uma aplicação Spring Boot que fornece autenticação baseada em JWT, incluindo registro de usuário, login, verificação de e-mail e recuperação de senha com notificações por e-mail.
 
 ## Funcionalidades
