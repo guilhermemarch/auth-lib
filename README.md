@@ -1,4 +1,4 @@
-# API de Autenticação
+# API de Autenticação com JWT
 
 [![Java](https://img.shields.io/badge/Java-17-red?logo=java&logoColor=white)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.4-brightgreen?logo=springboot)](https://spring.io/projects/spring-boot)
@@ -7,231 +7,332 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://www.docker.com/)
 [![Maven](https://img.shields.io/badge/Maven-3.9.x-orange?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 [![JWT](https://img.shields.io/badge/JWT-io.jsonwebtoken-9900cc)](https://github.com/jwtk/jjwt)
-[![Passay](https://img.shields.io/badge/Passay-password--validation-yellow)](https://www.passay.org/)
-[![Bucket4j](https://img.shields.io/badge/Bucket4j-rate--limiting-blueviolet)](https://bucket4j.com/)
 
-Uma aplicação Spring Boot que fornece autenticação baseada em JWT, incluindo registro de usuário, login, verificação de e-mail e recuperação de senha com notificações por e-mail.
+API RESTful robusta para autenticação de usuários, construída com Spring Boot 3.4.4. Oferece autenticação baseada em JWT, verificação de email, recuperação de senha, rate limiting e notificações assíncronas via RabbitMQ.
+
+---
+
+A API estará disponível em `http://localhost:8080` com PostgreSQL e RabbitMQ configurados automaticamente.
+
+---
 
 ## Funcionalidades
 
-- Registro de Usuário com Verificação de E-mail
-- Autenticação baseada em JWT
-- Fluxo de Recuperação de Senha
-- Notificações por E-mail
-- Integração com Banco de Dados PostgreSQL
-- Suporte a Docker
-- Documentação da API
+### Autenticação e Autorização
+- Registro de usuário com validação de senha forte
+- Verificação de email obrigatória com tokens seguros
+- Login baseado em JWT com tokens de acesso
+- Recuperação de senha via email com tokens temporários
+- Reenvio de email de verificação
 
-## Arquitetura do Sistema
+### Segurança
+- Criptografia de senha com BCrypt
+- Autenticação JWT com tokens assinados
+- Rate limiting usando Bucket4j (proteção contra brute force)
+- Validação de senha com Passay (regras de complexidade)
+- Configuração de CORS e CSRF
 
-![Relações do Banco de Dados](exemplos/sql-relations.png)
-
----
-
-## Pré-requisitos
-
-- Java 17
-- Docker & Docker Compose
-- PostgreSQL (se executando localmente)
-
----
-
-## Executando com Docker Compose
-
-1.  Clone o repositório:
-    ```bash
-    git clone https://github.com/your-username/auth-api.git
-    ```
-2.  Navegue até o diretório do projeto:
-    ```bash
-    cd auth-api
-    ```
-3.  Inicie os contêineres:
-    ```bash
-    docker-compose up -d
-    ```
-
-Isto iniciará os seguintes serviços:
-
--   **PostgreSQL** – acessível na porta `5432`
--   **pgAdmin** – acessível em `http://localhost:5050`
--   **AuthAPI** – disponível na porta `8080`
+### Infraestrutura
+- Notificações assíncronas via RabbitMQ
+- Templates de email profissionais em HTML
+- Docker Compose para deploy simplificado
+- PostgreSQL com persistência de dados
+- pgAdmin para gerenciamento do banco
 
 ---
 
-## Acesso ao Banco de Dados (pgAdmin)
+## Arquitetura
 
-**Credenciais de Login:**
+### Arquitetura do Sistema
 
--   **Email:** `admin@admin.com`
--   **Senha:** `admin`
-
-**Para conectar ao PostgreSQL:**
-
--   **Host:** `postgres`
--   **Porta:** `5432`
--   **Banco de Dados:** `auth_db`
--   **Usuário:** `postgres`
--   **Senha:** `admin`
-
----
-
-## Endpoints da API
-
-### 1. Registro de Usuário
-
-```http
-POST /api/auth/register
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        Client[Cliente/Frontend]
+    end
+    
+    subgraph "Application Layer"
+        API[Auth API<br/>Spring Boot 3.4.4<br/>Port 8080]
+    end
+    
+    subgraph "Data Layer"
+        DB[(PostgreSQL<br/>Port 5432)]
+        pgAdmin[pgAdmin<br/>Port 5050]
+    end
+    
+    subgraph "Messaging Layer"
+        MQ[RabbitMQ<br/>Port 5672/15672]
+        Worker[Email Worker]
+    end
+    
+    subgraph "External Services"
+        SMTP[SMTP Server<br/>Email Service]
+    end
+    
+    Client -->|HTTP/REST| API
+    API -->|JDBC/JPA| DB
+    pgAdmin -.->|Manage| DB
+    API -->|Publish Events| MQ
+    MQ -->|Consume Events| Worker
+    Worker -->|Send Email| SMTP
+    SMTP -.->|Email| Client
 ```
 
-Registra um novo usuário e envia um e-mail de verificação.
+### Fluxo de Autenticação (Registro e Login)
 
-**Corpo da Requisição:**
+```mermaid
+sequenceDiagram
+    actor User
+    participant API
+    participant DB
+    participant Queue as RabbitMQ
+    participant Worker
+    participant Email
+    
+    Note over User,Email: Registro de Usuário
+    User->>+API: POST /api/auth/register<br/>{username, email, password}
+    API->>API: Validar senha (Passay)
+    API->>API: Hash senha (BCrypt)
+    API->>DB: Salvar usuário
+    DB-->>API: Usuário criado
+    API->>API: Gerar token verificação
+    API->>DB: Salvar token
+    API->>Queue: Publicar evento email_verification
+    API-->>-User: 201 Created
+    
+    Queue->>Worker: Consumir evento
+    Worker->>Email: Enviar email HTML
+    Email-->>User: Email de verificação
+    
+    Note over User,Email: Verificação de Email
+    User->>+API: GET /api/auth/verify-email?token=xxx
+    API->>DB: Validar token
+    API->>DB: Marcar email como verificado
+    API-->>-User: Email verificado com sucesso
+    
+    Note over User,Email: Login
+    User->>+API: POST /api/auth/login<br/>{email, password}
+    API->>DB: Buscar usuário
+    API->>API: Verificar senha (BCrypt)
+    API->>API: Verificar email verificado
+    API->>API: Gerar JWT token
+    API-->>-User: 200 OK {token, expiresIn}
+```
 
-```json
-{
+### Fluxo de Recuperação de Senha
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant API
+    participant DB
+    participant Queue as RabbitMQ
+    participant Worker
+    participant Email
+    
+    User->>+API: POST /api/auth/forgot-password?email=user@example.com
+    API->>DB: Buscar usuário por email
+    alt Usuário encontrado
+        API->>API: Gerar token reset (UUID)
+        API->>DB: Salvar token com expiração (1h)
+        API->>Queue: Publicar evento password_reset
+        Queue->>Worker: Consumir evento
+        Worker->>Email: Enviar email com link
+        Email-->>User: Email com token de reset
+        API-->>-User: 200 OK
+    else Usuário não encontrado
+        API-->>User: 200 OK (não revela existência)
+    end
+    
+    User->>+API: POST /api/auth/reset-password<br/>{email, token, newPassword}
+    API->>DB: Validar token e expiração
+    alt Token válido
+        API->>API: Validar nova senha (Passay)
+        API->>API: Hash nova senha (BCrypt)
+        API->>DB: Atualizar senha
+        API->>DB: Invalidar token
+        API->>Queue: Publicar evento password_changed
+        Queue->>Worker: Consumir evento
+        Worker->>Email: Enviar confirmação
+        Email-->>User: Email de confirmação
+        API-->>-User: 200 OK
+    else Token inválido/expirado
+        API-->>User: 400 Bad Request
+    end
+```
+
+---
+
+## Tecnologias
+
+### Backend
+| Tecnologia | Versão | Propósito |
+|------------|--------|-----------|
+| Java | 17 | Linguagem principal |
+| Spring Boot | 3.4.4 | Framework web |
+| Spring Security | 6.x | Autenticação e autorização |
+| Spring Data JPA | 3.x | Persistência de dados |
+| Spring AMQP | 3.x | Integração RabbitMQ |
+| Hibernate | 6.x | ORM |
+
+### Segurança
+| Biblioteca | Versão | Propósito |
+|------------|--------|-----------|
+| JJWT | 0.11.5 | Geração e validação de JWT |
+| BCrypt | - | Hash de senhas |
+| Passay | 1.6.4 | Validação de senha forte |
+| Bucket4j | 7.6.0 | Rate limiting |
+
+### Infraestrutura
+| Serviço | Versão | Propósito |
+|---------|--------|-----------|
+| PostgreSQL | 15.x | Banco de dados |
+| RabbitMQ | 3.x | Message broker |
+| Docker | - | Containerização |
+| pgAdmin | 4.x | Gerenciamento de BD |
+| Maven | 3.9.x | Build tool |
+
+---
+
+## Uso
+
+### Exemplo Completo de Fluxo de Registro e Login
+
+#### 1. Registrar novo usuário
+
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
     "username": "guilherme",
-    "password": "Guilherme@123!",
-    "email": "guilherme@gmail.com"
-}
-```
-
-### 2. Login de Usuário
-
-```http
-POST /api/auth/login
-```
-
-Autentica um usuário e retorna um token JWT.
-
-**Corpo da Requisição:**
-
-```json
-{
     "email": "guilherme@gmail.com",
     "password": "Guilherme@123!"
-}
+  }'
 ```
 
-### 3. Esqueceu a Senha
-
-```http
-POST /api/auth/forgot-password?email=guilherme@gmail.com
-```
-
-Solicita um link de redefinição de senha por e-mail.
-
-### 4. Redefinir Senha
-
-```http
-POST /api/auth/reset-password
-```
-
-Redefine a senha usando o token recebido por e-mail.
-
-**Corpo da Requisição:**
-
+**Resposta:**
 ```json
 {
-    "email": "guilherme@gmail.com",
-    "token": "seu-token-de-reset",
-    "newPassword": "NovaSenha@2024!"
+  "message": "Usuário registrado com sucesso. Verifique seu email.",
+  "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
 }
 ```
 
-### 5. Verificação de E-mail
+#### 2. Verificar email
 
-```http
-GET /api/auth/verify-email?token=seu-token-de-verificacao
+Após receber o email, clicar no link ou fazer uma requisição:
+
+```bash
+curl -X GET "http://localhost:8080/api/auth/verify-email?token=abc123xyz"
 ```
 
-Verifica o endereço de e-mail do usuário usando o token recebido.
+#### 3. Fazer login
 
-### 6. Reenviar E-mail de Verificação
-
-```http
-POST /api/auth/resend-verification?email=guilherme@gmail.com
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "guilherme@gmail.com",
+    "password": "Guilherme@123!"
+  }'
 ```
 
-Solicita um novo e-mail de verificação.
-
-### 7. Verificação de Saúde (Health Check)
-
-```http
-GET /api/auth/health
+**Resposta:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "type": "Bearer",
+  "expiresIn": 3600,
+  "user": {
+    "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "username": "guilherme",
+    "email": "guilherme@gmail.com",
+    "verified": true
+  }
+}
 ```
 
-Verifica o status da API.
+#### 4. Usar token JWT em requisições autenticadas
+
+```bash
+curl -X GET http://localhost:8080/api/user/profile \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
 
 ---
 
-## Exemplos de Notificação por E-mail
+## API Endpoints
 
-### E-mail de Confirmação de Registro
+### Autenticação
 
-![E-mail de Registro](exemplos/img_1.png)
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `POST` | `/api/auth/register` | Registrar novo usuário |
+| `POST` | `/api/auth/login` | Autenticar usuário e retornar JWT |
+| `GET` | `/api/auth/verify-email?token={token}` | Verificar endereço de email |
+| `POST` | `/api/auth/forgot-password?email={email}` | Solicitar reset de senha |
+| `POST` | `/api/auth/reset-password` | Redefinir senha usando token |
+| `POST` | `/api/auth/resend-verification?email={email}` | Reenviar email de verificação |
+| `GET` | `/api/auth/health` | Health check da API |
 
-### Verificação de E-mail
+---
 
-![Verificação de E-mail](exemplos/img_2.png)
+## Segurança
 
-### Solicitação de Redefinição de Senha
+### Recursos de Segurança Implementados
+
+#### 1. Rate Limiting (Bucket4j)
+Protege contra ataques de força bruta:
+- Login: 10 tentativas por minuto por IP
+- Registro: 5 registros por minuto por IP
+- Recuperação de senha: 3 solicitações por hora por IP
+
+#### 2. Validação de Senha (Passay)
+Garante senhas fortes com regras customizáveis
+
+#### 3. Hash de Senha (BCrypt)
+- Fator de custo: 12
+- Salt automático
+- Proteção contra rainbow tables
+
+#### 4. JWT Tokens
+- Assinatura HMAC SHA-256
+- Expiração configurável (padrão 1h)
+- Claims customizados (userId, email, roles)
+
+#### 5. CORS e CSRF
+- CORS configurado para origens permitidas
+- CSRF desabilitado para API stateless (JWT)
+
+#### 6. Tokens de Verificação
+- UUIDs aleatórios seguros
+- Expiração de 24 horas (verificação email)
+- Expiração de 1 hora (reset senha)
+- Uso único (invalidados após uso)
+
+---
+
+## Exemplos de Email
+
+### Email de Confirmação de Registro
+
+![Email de Registro](exemplos/img_1.png)
+
+### Email de Verificação
+
+![Verificação de Email](exemplos/img_2.png)
+
+### Email de Redefinição de Senha
 
 ![Redefinição de Senha](exemplos/img_3.png)
 
-### Confirmação de Redefinição de Senha
+### Email de Confirmação de Redefinição
 
 ![Confirmação de Redefinição](exemplos/img_4.png)
 
 ---
 
-## Configuração de Ambiente
+## Recursos Adicionais
 
-As variáveis de ambiente são definidas no arquivo `.env`, incluindo:
-
--   Configuração do banco de dados PostgreSQL
--   Segredo e tempo de expiração do JWT
--   Porta do servidor
--   Configuração do serviço de e-mail
--   Configurações do RabbitMQ
-
----
-
-## Executando Localmente (sem Docker)
-
-1.  Certifique-se de que o PostgreSQL está rodando localmente.
-2.  Atualize o arquivo `src/main/resources/application.properties` com as credenciais do seu banco de dados local.
-3.  Execute a aplicação:
-    ```bash
-    ./mvnw spring-boot:run
-    ```
-
----
-
-## Construindo a Aplicação
-
-```bash
-./mvnw clean package
-```
-
-Isso irá gerar um arquivo JAR no diretório `target/`.
-
----
-
-## Funcionalidades de Segurança
-
--   Autenticação baseada em JWT
--   Criptografia de senha usando BCrypt
--   Verificação de e-mail
--   Redefinição de senha baseada em token
--   Proteção contra CORS e CSRF
--   Limitação de taxa de requisições (Rate Limiting)
--   Validação de senha segura
-
----
-
-## Json das Requisições
-
-Uma coleção completa do Postman está disponível no arquivo `exemplos/auth-collection.json`. Importe esta coleção no Postman para testar todos os endpoints disponíveis.
-
----
+- [Coleção do Postman](exemplos/auth-collection.json) - Importe para testar todos os endpoints
+- [Diagrama de Banco de Dados](exemplos/sql-relations.png) - Esquema ER completo
